@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Gallery{% endblock %}
+{% block content %}
+<div class="section">
+    <h1>Gallery</h1>
+    <p class="section-subtitle">Explore all images uploaded by our community</p>
+
+    {% if images.items %}
+        <div class="image-grid">
+            {% for image in images.items %}
+                <div class="image-card">
+                    <a href="{{ get_image_url(image.filename) }}" target="_blank">
+                        <img src="{{ get_image_url(image.filename) }}" alt="{{ image.title or image.original_name }}">
+                    </a>
+                    <div class="image-info">
+                        <p class="image-title">{{ image.title or image.original_name }}</p>
+                        <p class="image-author">by <a href="{{ url_for('main.profile', username=image.owner.username) }}">{{ image.owner.username }}</a></p>
+                        <span class="image-date">{{ image.uploaded_at.strftime('%Y-%m-%d') }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="pagination">
+            {% if images.has_prev %}
+                <a href="{{ url_for('main.gallery', page=images.prev_num) }}" class="btn btn-small">← Previous</a>
+            {% endif %}
+            <span class="page-info">Page {{ images.page }} of {{ images.pages }}</span>
+            {% if images.has_next %}
+                <a href="{{ url_for('main.gallery', page=images.next_num) }}" class="btn btn-small">Next →</a>
+            {% endif %}
+        </div>
+    {% else %}
+        <p class="empty-state">No images in the gallery yet. <a href="{{ url_for('auth.register') }}">Join us</a> and share your photos!</p>
+    {% endif %}
+</div>
+{% endblock %}

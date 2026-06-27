@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Edit Profile{% endblock %}
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2>Edit Profile</h2>
+        <form method="POST" action="{{ url_for('main.edit_profile') }}">
+            <div class="form-group">
+                <label for="bio">Bio</label>
+                <textarea id="bio" name="bio" rows="4" placeholder="Tell us about yourself...">{{ current_user.bio }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Save Changes</button>
+        </form>
+        <p class="auth-link"><a href="{{ url_for('main.profile', username=current_user.username) }}">Back to Profile</a></p>
+    </div>
+</div>
+{% endblock %}

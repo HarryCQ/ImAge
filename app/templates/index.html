@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Gallery - Home{% endblock %}
+{% block content %}
+<div class="hero">
+    <h1>Welcome to Image Gallery</h1>
+    <p>Share your photos, create exhibitions, and explore amazing images.</p>
+    {% if current_user.is_authenticated %}
+        <a href="{{ url_for('main.profile', username=current_user.username) }}" class="btn btn-primary">My Profile</a>
+        <a href="{{ url_for('main.create_exhibition') }}" class="btn btn-secondary">Create Exhibition</a>
+    {% else %}
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Get Started</a>
+        <a href="{{ url_for('auth.login') }}" class="btn btn-secondary">Login</a>
+    {% endif %}
+</div>
+
+<div class="section">
+    <h2>Recent Exhibitions</h2>
+    <div class="exhibition-grid">
+        {% for exhibition in exhibitions %}
+            <div class="exhibition-card">
+                {% if exhibition.items %}
+                    <div class="exhibition-preview">
+                        {% for item in exhibition.items[:4] %}
+                            <img src="{{ get_image_url(item.image.filename) }}" alt="{{ item.image.title }}">
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="exhibition-preview empty">
+                        <span>No images yet</span>
+                    </div>
+                {% endif %}
+                <div class="exhibition-card-info">
+                    <h3><a href="{{ url_for('main.view_exhibition', exhibition_id=exhibition.id) }}">{{ exhibition.title }}</a></h3>
+                    <p>by <a href="{{ url_for('main.profile', username=exhibition.owner.username) }}">{{ exhibition.owner.username }}</a></p>
+                    <span class="image-count">{{ exhibition.items|length }} images</span>
+                </div>
+            </div>
+        {% else %}
+            <p class="empty-state">No exhibitions yet. Be the first to create one!</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

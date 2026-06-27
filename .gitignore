@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Flask / Database
+instance/
+*.db
+
+# Uploads (local storage - keep folder, ignore contents if not tracking)
+app/static/uploads/*
+!app/static/uploads/default_avatar.svg
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+*.env.local

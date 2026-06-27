@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Create Exhibition{% endblock %}
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2>Create New Exhibition</h2>
+        <form method="POST" action="{{ url_for('main.create_exhibition') }}">
+            <div class="form-group">
+                <label for="title">Exhibition Title</label>
+                <input type="text" id="title" name="title" required placeholder="Enter a title for your exhibition">
+            </div>
+            <div class="form-group">
+                <label for="description">Description (optional)</label>
+                <textarea id="description" name="description" rows="4" placeholder="Describe your exhibition..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Create Exhibition</button>
+        </form>
+        <p class="auth-link"><a href="{{ url_for('main.profile', username=current_user.username) }}">Back to Profile</a></p>
+    </div>
+</div>
+{% endblock %}

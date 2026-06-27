@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ exhibition.title }}{% endblock %}
+{% block content %}
+<div class="exhibition-header">
+    <h1>{{ exhibition.title }}</h1>
+    <p class="exhibition-meta">
+        by <a href="{{ url_for('main.profile', username=exhibition.owner.username) }}">{{ exhibition.owner.username }}</a>
+        · {{ exhibition.created_at.strftime('%Y-%m-%d') }}
+        · {{ items|length }} images
+    </p>
+    {% if exhibition.description %}
+        <p class="exhibition-description">{{ exhibition.description }}</p>
+    {% endif %}
+    {% if current_user.is_authenticated and current_user.id == exhibition.user_id %}
+        <div class="exhibition-actions">
+            <a href="{{ url_for('main.edit_exhibition', exhibition_id=exhibition.id) }}" class="btn btn-small">Edit Exhibition</a>
+        </div>
+    {% endif %}
+</div>
+
+<div class="exhibition-view">
+    {% if items %}
+        <div class="exhibition-slideshow" id="slideshow">
+            {% for item in items %}
+                <div class="slide {% if loop.first %}active{% endif %}" data-index="{{ loop.index0 }}">
+                    <img src="{{ get_image_url(item.image.filename) }}" alt="{{ item.caption or item.image.title }}">
+                    {% if item.caption %}
+                        <div class="slide-caption">{{ item.caption }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="slideshow-controls">
+            <button class="btn btn-small" onclick="changeSlide(-1)">← Previous</button>
+            <span id="slide-counter">1 / {{ items|length }}</span>
+            <button class="btn btn-small" onclick="changeSlide(1)">Next →</button>
+        </div>
+
+        <div class="exhibition-thumbnails">
+            {% for item in items %}
+                <div class="thumbnail {% if loop.first %}active{% endif %}" data-index="{{ loop.index0 }}" onclick="goToSlide({{ loop.index0 }})">
+                    <img src="{{ get_image_url(item.image.filename) }}" alt="">
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="empty-state">This exhibition has no images yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const thumbnails = document.querySelectorAll('.thumbnail');
+const counter = document.getElementById('slide-counter');
+
+function showSlide(index) {
+    slides.forEach(s => s.classList.remove('active'));
+    thumbnails.forEach(t => t.classList.remove('active'));
+    slides[index].classList.add('active');
+    thumbnails[index].classList.add('active');
+    if (counter) counter.textContent = `${index + 1} / ${slides.length}`;
+    currentSlide = index;
+}
+
+function changeSlide(direction) {
+    let newIndex = currentSlide + direction;
+    if (newIndex < 0) newIndex = slides.length - 1;
+    if (newIndex >= slides.length) newIndex = 0;
+    showSlide(newIndex);
+}
+
+function goToSlide(index) {
+    showSlide(index);
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') changeSlide(-1);
+    if (e.key === 'ArrowRight') changeSlide(1);
+});
+</script>
+{% endblock %}

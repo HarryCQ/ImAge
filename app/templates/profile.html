@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}{{ profile_user.username }}'s Profile{% endblock %}
+{% block content %}
+<div class="profile-header">
+    <div class="profile-avatar-section">
+        <div class="profile-avatar">
+            <img src="{{ get_image_url(profile_user.avatar) }}" alt="{{ profile_user.username }}">
+        </div>
+        <h1>{{ profile_user.username }}</h1>
+        {% if profile_user.bio %}
+            <p class="profile-bio">{{ profile_user.bio }}</p>
+        {% endif %}
+        <p class="profile-meta">Member since {{ profile_user.created_at.strftime('%B %Y') }}</p>
+
+        {% if current_user.is_authenticated and current_user.id == profile_user.id %}
+            <div class="profile-actions">
+                <form method="POST" action="{{ url_for('main.upload_avatar') }}" enctype="multipart/form-data" class="avatar-upload-form">
+                    <label for="avatar-input" class="btn btn-small">Change Avatar</label>
+                    <input type="file" id="avatar-input" name="avatar" accept="image/*" hidden onchange="this.form.submit()">
+                </form>
+                <a href="{{ url_for('main.edit_profile') }}" class="btn btn-small">Edit Bio</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="profile-stats">
+        <div class="stat">
+            <span class="stat-number">{{ images|length }}</span>
+            <span class="stat-label">Images</span>
+        </div>
+        <div class="stat">
+            <span class="stat-number">{{ exhibitions|length }}</span>
+            <span class="stat-label">Exhibitions</span>
+        </div>
+    </div>
+</div>
+
+{% if current_user.is_authenticated and current_user.id == profile_user.id %}
+<div class="upload-section">
+    <h2>Upload Images</h2>
+    <form method="POST" action="{{ url_for('main.upload') }}" enctype="multipart/form-data" class="upload-form">
+        <div class="upload-dropzone" id="dropzone">
+            <p>Drag & drop images here or click to select</p>
+            <input type="file" name="file" accept="image/*" multiple hidden id="file-input">
+        </div>
+        <div class="upload-preview" id="upload-preview"></div>
+        <button type="submit" class="btn btn-primary" id="upload-btn" style="display:none">Upload</button>
+    </form>
+</div>
+{% endif %}
+
+<div class="section">
+    <h2>Images</h2>
+    {% if images %}
+        <div class="image-grid">
+            {% for image in images %}
+                <div class="image-card">
+                    <a href="{{ get_image_url(image.filename) }}" target="_blank">
+                        <img src="{{ get_image_url(image.filename) }}" alt="{{ image.title or image.original_name }}">
+                    </a>
+                    <div class="image-info">
+                        <p class="image-title">{{ image.title or image.original_name }}</p>
+                        <span class="image-date">{{ image.uploaded_at.strftime('%Y-%m-%d') }}</span>
+                    </div>
+                    {% if current_user.is_authenticated and current_user.id == profile_user.id %}
+                        <form method="POST" action="{{ url_for('main.delete_image', image_id=image.id) }}" class="delete-form" onsubmit="return confirm('Delete this image?')">
+                            <button type="submit" class="btn-delete" title="Delete">×</button>
+                        </form>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="empty-state">No images yet.</p>
+    {% endif %}
+</div>
+
+<div class="section">
+    <h2>Exhibitions</h2>
+    {% if exhibitions %}
+        <div class="exhibition-grid">
+            {% for exhibition in exhibitions %}
+                <div class="exhibition-card">
+                    {% if exhibition.items %}
+                        <div class="exhibition-preview">
+                            {% for item in exhibition.items[:4] %}
+                                <img src="{{ get_image_url(item.image.filename) }}" alt="">
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="exhibition-preview empty">
+                            <span>No images yet</span>
+                        </div>
+                    {% endif %}
+                    <div class="exhibition-card-info">
+                        <h3><a href="{{ url_for('main.view_exhibition', exhibition_id=exhibition.id) }}">{{ exhibition.title }}</a></h3>
+                        <span class="image-count">{{ exhibition.items|length }} images</span>
+                    </div>
+                    {% if current_user.is_authenticated and current_user.id == profile_user.id %}
+                        <div class="exhibition-actions">
+                            <a href="{{ url_for('main.edit_exhibition', exhibition_id=exhibition.id) }}" class="btn btn-small">Edit</a>
+                            <form method="POST" action="{{ url_for('main.delete_exhibition', exhibition_id=exhibition.id) }}" onsubmit="return confirm('Delete this exhibition?')">
+                                <button type="submit" class="btn btn-small btn-danger">Delete</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="empty-state">No exhibitions yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ exhibition.title }}{% endblock %}
+{% block content %}
+<div class="edit-exhibition-container">
+    <div class="auth-card" style="max-width: 800px; margin: 0 auto;">
+        <h2>Edit Exhibition: {{ exhibition.title }}</h2>
+
+        <form method="POST" action="{{ url_for('main.edit_exhibition', exhibition_id=exhibition.id) }}">
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" value="{{ exhibition.title }}" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="3">{{ exhibition.description }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+
+        <hr>
+
+        <h3>Add Images</h3>
+        <div class="image-picker">
+            {% for image in user_images %}
+                <div class="pickable-image {% if image in items|map(attribute='image') %}selected{% endif %}"
+                     data-image-id="{{ image.id }}"
+                     onclick="addToExhibition({{ exhibition.id }}, {{ image.id }})">
+                    <img src="{{ get_image_url(image.filename) }}" alt="{{ image.title }}">
+                    <span>{{ image.title or image.original_name }}</span>
+                </div>
+            {% else %}
+                <p>No images available. <a href="{{ url_for('main.profile', username=current_user.username) }}">Upload some first!</a></p>
+            {% endfor %}
+        </div>
+
+        <hr>
+
+        <h3>Exhibition Images (drag to reorder)</h3>
+        <div class="exhibition-items" id="exhibition-items">
+            {% for item in items %}
+                <div class="exhibition-item" data-item-id="{{ item.id }}">
+                    <img src="{{ get_image_url(item.image.filename) }}" alt="">
+                    <div class="item-info">
+                        <span>{{ item.image.title or item.image.original_name }}</span>
+                        {% if item.caption %}
+                            <small>{{ item.caption }}</small>
+                        {% endif %}
+                    </div>
+                    <button class="btn-delete" onclick="removeFromExhibition({{ exhibition.id }}, {{ item.id }})" title="Remove">×</button>
+                </div>
+            {% else %}
+                <p class="empty-state">No images in this exhibition yet. Select images above to add them.</p>
+            {% endfor %}
+        </div>
+
+        <p class="auth-link"><a href="{{ url_for('main.view_exhibition', exhibition_id=exhibition.id) }}">View Exhibition</a></p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addToExhibition(exhibitionId, imageId) {
+    const formData = new FormData();
+    formData.append('image_id', imageId);
+    formData.append('caption', '');
+
+    fetch(`/exhibition/${exhibitionId}/add_image`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function removeFromExhibition(exhibitionId, itemId) {
+    if (!confirm('Remove this image from the exhibition?')) return;
+
+    fetch(`/exhibition/${exhibitionId}/remove_image/${itemId}`, {
+        method: 'POST'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+// Drag and drop reordering
+const itemsContainer = document.getElementById('exhibition-items');
+if (itemsContainer) {
+    let dragItem = null;
+
+    itemsContainer.addEventListener('dragstart', (e) => {
+        dragItem = e.target.closest('.exhibition-item');
+        dragItem.classList.add('dragging');
+    });
+
+    itemsContainer.addEventListener('dragend', (e) => {
+        e.target.closest('.exhibition-item')?.classList.remove('dragging');
+    });
+
+    itemsContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const afterElement = getDragAfterElement(itemsContainer, e.clientY);
+        const draggable = document.querySelector('.dragging');
+        if (afterElement) {
+            itemsContainer.insertBefore(draggable, afterElement);
+        } else {
+            itemsContainer.appendChild(draggable);
+        }
+    });
+
+    itemsContainer.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const itemElements = itemsContainer.querySelectorAll('.exhibition-item');
+        const order = Array.from(itemElements).map(el => parseInt(el.dataset.itemId));
+        fetch(`/exhibition/{{ exhibition.id }}/reorder`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({order: order})
+        });
+    });
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.exhibition-item:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return {offset: offset, element: child};
+            }
+            return closest;
+        }, {offset: Number.NEGATIVE_INFINITY}).element;
+    }
+
+    // Make items draggable
+    itemsContainer.querySelectorAll('.exhibition-item').forEach(item => {
+        item.draggable = true;
+    });
+}
+</script>
+{% endblock %}
